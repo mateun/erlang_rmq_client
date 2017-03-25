@@ -36,6 +36,8 @@ loop(Channel) ->
 		{#'basic.deliver'{delivery_tag = Tag}, Content} ->
 											#amqp_msg{payload = Payload} = Content,
 											io:format("rec. message: ~p~n", [Payload]),
+											amqp_channel:cast(Channel, #'basic.ack'{delivery_tag = Tag}),
+											timer:sleep(333),
 											loop(Channel)
 		end.
 
