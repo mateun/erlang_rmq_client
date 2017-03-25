@@ -26,6 +26,25 @@ send(QName, Channel, Msg) ->
 	amqp_channel:cast(Channel, Publish, #amqp_msg{payload = Msg}),
 	Msg.
 
+loop(Channel) ->
+	receive
+		#'basic.consume_ok'{} -> io:format("subscription ok~n"), 
+															loop(Channel);
+
+		#'basic.cancel_ok'{} -> io:format("sub. cancel ok~n"), ok;
+
+		{#'basic.deliver'{delivery_tag = Tag}, Content} ->
+											#amqp_msg{payload = Payload} = Content,
+											io:format("rec. message: ~p~n", [Payload]),
+											loop(Channel)
+		end.
+
+
+subscribe(QName, Channel) ->
+	Sub = #'basic.consume'{queue = QName},
+	#'basic.consume_ok'{consumer_tag = Tag} = amqp_channel:subscribe(Channel, Sub, self()),
+	loop(Channel).
+
 poll(QName, Channel) ->
 	io:format("polling for message~n"),
 	
